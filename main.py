@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import gspeech
 import time
+import os
 
 def main():
     gsp = gspeech.Gspeech()
@@ -12,6 +13,8 @@ def main():
         print(stt)
 
         gsp.text_to_speech(stt)
+
+        os.remove('tmp.wav')
 
         time.sleep(0.01)
         #끝내자는 명령이 들어오면 프로그램 종료
