@@ -1,24 +1,23 @@
 # -*- coding: utf-8 -*-
-# 참고 사이트 : https://blog.naver.com/PostView.nhn?blogId=chandong83&logNo=221149840032&parentCategoryNo=&categoryNo=65&viewDate=&isShowPopularPosts=false&from=postList
 from __future__ import division
 
 import re
 import sys
 
-# pip install --upgrade google-cloud-speech
-
 from google.cloud import speech
 from google.cloud.speech import enums
 from google.cloud.speech import types
-
-# conda install -c anaconda pyaudio
-
 import pyaudio
 from six.moves import queue
 from threading import Thread
 import time
 
+import wave
+from google.cloud import texttospeech
+
 import os
+
+# 각자 발급 받은 json File을 넣으면 됩니다.
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"]='file_name.json'
 
 # Audio recording parameters
@@ -151,6 +150,61 @@ class Gspeech(Thread):
     # 인식된 Text 가져가기
     def getText(self, block = True):
         return self._buff.get(block=block)
+
+    # TTS
+    def text_to_speech(self, text):
+        client = texttospeech.TextToSpeechClient()
+
+        # Set the text input to be synthesized
+        synthesis_input = texttospeech.types.SynthesisInput(text=text)
+
+        # Build the voice request, select the language code ("ko-KR") and the ssml
+        # voice gender ("neutral")
+        voice = texttospeech.types.VoiceSelectionParams(
+            language_code='ko-KR',
+            ssml_gender=texttospeech.enums.SsmlVoiceGender.NEUTRAL)
+
+        # Select the type of audio file you want returned
+        audio_config = texttospeech.types.AudioConfig(
+            audio_encoding=texttospeech.enums.AudioEncoding.LINEAR16)
+
+        # Perform the text-to-speech request on the text input with the selected
+        # voice parameters and audio file type
+        response = client.synthesize_speech(synthesis_input, voice, audio_config)
+
+        # The response's audio_content is binary.
+        with open('tmp.wav', 'wb') as out:
+            # Write the response to the output file.
+            out.write(response.audio_content)
+
+        tmpPlayPath = 'tmp.wav'
+
+        wf = wave.open(tmpPlayPath, 'rb')
+        p = pyaudio.PyAudio()
+        chunk = 1024
+
+        # open stream based on the wave object which has been input.
+        stream = p.open(format=p.get_format_from_width(wf.getsampwidth()),
+                        channels=wf.getnchannels(),
+                        rate=wf.getframerate(),
+                        output=True)
+
+        # read data (based on the chunk size)
+        data = wf.readframes(chunk)
+
+        # play stream (looping from beginning of file to the end)
+        while data != '':
+            # writing to the stream is what *actually* plays the sound.
+            stream.write(data)
+            data = wf.readframes(chunk)
+            if len(data) == 0:
+               break
+
+        # cleanup stuff.
+        stream.stop_stream()
+        stream.close()
+        p.terminate()
+
 
     # 음성인식 처리 루틴
     def listen_print_loop(self, responses, mic):
