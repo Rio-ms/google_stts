@@ -4,15 +4,22 @@ from __future__ import division
 import re
 import sys
 
+# pip install --upgrade google-cloud-speech
 from google.cloud import speech
 from google.cloud.speech import enums
 from google.cloud.speech import types
+
+# conda install -c anaconda pyaudio
 import pyaudio
+
 from six.moves import queue
 from threading import Thread
 import time
 
+# pip install wave
 import wave
+
+# pip install --upgrade google-cloud-texttospeech
 from google.cloud import texttospeech
 
 import os
