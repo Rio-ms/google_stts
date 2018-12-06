@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import gspeech
 import time
-import os
 
 def main():
     gsp = gspeech.Gspeech()
